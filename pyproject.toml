@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prompt_manager"
+version = "0.1.0"
+requires-python = ">=3.14"
+
+dependencies = []
+
+
+#[project.scripts]
+#vidsift = "vidsift.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+[tool.setuptools.package-data]
+vidsift = ["defaults/*"]
+
+[dependency-groups]
+dev = ["debugpy>=1.8.20", "pytest>=9.0.3"]
