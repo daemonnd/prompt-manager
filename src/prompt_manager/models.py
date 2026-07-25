@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 
 class MetadataModel(BaseModel):
+    name: str
     description: str
     tags: list[str]
     prompt_file_name: str
