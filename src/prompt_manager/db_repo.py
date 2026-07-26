@@ -1,17 +1,16 @@
-import datetime
+import json
 import sqlite3
 from pathlib import Path
 from sqlite3 import Connection, Cursor, IntegrityError, OperationalError
-from typing import Generator, Literal
+from typing import Any, Generator, Literal
 
-from platformdirs import user_data_dir
 from pydantic import ValidationError
 
 from prompt_manager.constants import DATABASE_DIR
 from prompt_manager.models import MetadataModel
 
 
-class VideoProcessingRepository:
+class PromptTemplateRepository:
     def __init__(self, db_path: Path = DATABASE_DIR) -> None:
         self.db_path: Path = db_path
 
@@ -20,20 +19,26 @@ class VideoProcessingRepository:
         self._initialize_database()
 
     def _initialize_database(self) -> None:
-        self.cur.execute("""CREATE TABLE IF NOT EXISTS templates (
-            name TEXT PRIMARY KEY,
-
-            description TEXT,
-            tags TEXT
-            prompt_file_name TEXT
+        self.cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS templates (
+                name TEXT PRIMARY KEY,
+                description TEXT,
+                tags TEXT,
+                prompt_file_name TEXT
+            )
+            """
         )
-        """)
         self.conn.commit()
 
-    def create_new(self, data: MetadataModel):
+    def create_new(self, data: MetadataModel) -> None:
         """
-        Method for adding a template to the db.
+        Method for adding a template to the database.
         """
+        if isinstance(data.tags, list):
+            raise ValueError(
+                f"data.tags cannot be a list for using with sqlite, but it is one: {data.tags}"
+            )
         try:
             parameters: tuple = (
                 data.name,
@@ -43,24 +48,29 @@ class VideoProcessingRepository:
             )
             self.cur.execute(
                 """
-            INSERT INTO processed_videos VALUES
-            (?, ?, ?, ?)""",
+                INSERT INTO templates VALUES
+                (?, ?, ?, ?)
+                """,
                 parameters,
             )
             self.conn.commit()
         except IntegrityError as e:
             raise IntegrityError(
-                f"IntegrityError: Failed to write to DB while creating template '{data.name}' because a database operand violated a constraint: {str(e)}"
+                f"IntegrityError: Failed to write to the database while creating template '{data.name}' because a database constraint was violated: {str(e)}"
             ) from e
         except OperationalError as e:
             raise OperationalError(
-                f"Failed to write to DB while creating template '{data.name}' because of an operational Error: {str(e)}"
+                f"Failed to write to the database while creating template '{data.name}' because of an operational error: {str(e)}"
             ) from e
 
-    def update_template(self, name: str, data: MetadataModel):
+    def update_template(self, name: str, data: MetadataModel) -> None:
         """
-        Method to add the validation data to the table entry and update the status to ether DONE, DOWNLOADING or SUMMARIZING
+        Method to update an existing template.
         """
+        if isinstance(data.tags, list):
+            raise ValueError(
+                f"data.tags cannot be a list for using with sqlite, but it is one: {data.tags}"
+            )
         try:
             parameters: tuple = (
                 data.name,
@@ -72,198 +82,149 @@ class VideoProcessingRepository:
             self.cur.execute(
                 """
                 UPDATE templates
-                SET name = ?,
-                description = ?,
-                tags = ?,
-                prompt_file_name = ?
+                SET
+                    name = ?,
+                    description = ?,
+                    tags = ?,
+                    prompt_file_name = ?
                 WHERE name = ?
                 """,
                 parameters,
             )
             self.conn.commit()
+
             if self.cur.rowcount != 1:
                 print(
-                    f"Expected to update 1 row for {name}, updated {self.cur.rowcount}"
+                    f"Expected to update 1 row for '{name}', updated {self.cur.rowcount}"
                 )
         except IntegrityError as e:
             raise IntegrityError(
-                f"Failed to write to DB while updating the database entry for '{data.name}' the status after validation because a database operand violated a constraint: {str(e)}"
+                f"Failed to write to the database while updating template '{data.name}' because a database constraint was violated: {str(e)}"
             ) from e
         except OperationalError as e:
             raise OperationalError(
-                f"Failed to write to DB while updating the status after validation because of an operational Error: {str(e)}"
+                f"Failed to write to the database while updating template '{data.name}' because of an operational error: {str(e)}"
             ) from e
 
-    def del_row(self, name: str):
+    def del_template(self, name: str) -> None:
         """
-        Method to delete a row so that the video can later be processed again
+        Method to delete a template.
         """
         try:
             if not self.exists(name):
                 raise ValueError(
-                    f"There is no row with the video id {name} in the database, it cannot be removed"
+                    f"There is no template with the name '{name}' in the database."
                 )
 
             self.cur.execute(
                 """
-                DELETE FROM processed_videos
-                WHERE video_id = ?
+                DELETE FROM templates
+                WHERE name = ?
                 """,
                 (name,),
             )
             self.conn.commit()
+
             if self.cur.rowcount != 1:
                 raise Exception(
-                    f"Expected to update 1 row for {name}, updated {self.cur.rowcount}"
+                    f"Expected to delete 1 row for '{name}', deleted {self.cur.rowcount}"
                 )
         except IntegrityError as e:
             raise IntegrityError(
-                f"Failed to write to DB while deleting row with name '{name}' because a database operand violated a constraint: {str(e)}"
-            )
+                f"Failed to write to the database while deleting template '{name}' because a database constraint was violated: {str(e)}"
+            ) from e
         except OperationalError as e:
             raise OperationalError(
-                f"Failed to write to DB while deleting row with name '{name}' because of an operational Error: {str(e)}"
+                f"Failed to write to the database while deleting template '{name}' because of an operational error: {str(e)}"
             ) from e
 
-    def get(self, video_id: str) -> VideoProcessingRecord | None:
+    def get(
+        self,
+        name: str,
+        pattern: list[Literal["name", "description", "tags", "prompt_file_name"]] = [
+            "name",
+            "description",
+            "tags",
+            "prompt_file_name",
+        ],
+    ) -> MetadataModel | None:
         """
-        Method to get the DB entry of the video with the video id video_id.
+        Method to get a template by name.
         """
         row = self.cur.execute(
-            "SELECT * FROM processed_videos WHERE video_id=?", (video_id,)
+            """
+            SELECT ? FROM templates
+            WHERE name = ?
+            """,
+            (
+                pattern,
+                name,
+            ),
         ).fetchone()
+
         if row is None:
             return None
+
         try:
-            return VideoProcessingRecord.model_validate(dict(row))
-        except ValidationError as e:
-            raise VideoProcessingDataValidationError(
-                f"Failed to return results because of a ValidationError from pydantic: {str(e)}"
-            ) from e
+            return MetadataModel.model_validate(dict(row))
+        except ValidationError:
+            raise
 
-    def exists(self, video_id: str) -> bool:
+    def exists(self, name: str) -> bool:
         """
-        Method to get if an entry already exists
-        Returns True if it already exists
-        Returns False if it does not exist
+        Returns True if the template exists.
         """
-        if (
+        return (
             self.cur.execute(
-                "SELECT 1 FROM processed_videos WHERE video_id=?", (video_id,)
-            )
-        ).fetchone():
-            return True
-        else:
-            return False
-
-    def get_by_status(
-        self,
-        status: Literal[
-            "downloading",
-            "summarizing",
-            "done",
-            "failed",
-            "validating",
-            "livestream_checking",
-        ],
-    ) -> Generator[VideoProcessingRecord, None, None]:
-        """
-        Method to get a list of the videos interrupted
-        """
-        parameters: tuple = (status,)
-        rows = self.cur.execute(
-            """
-        SELECT * FROM processed_videos
-        WHERE status = ?
-        """,
-            parameters,
-        ).fetchall()
-        if not rows:
-            return None
-        for row in rows:
-            try:
-                yield VideoProcessingRecord.model_validate(dict(row))
-            except ValidationError as e:
-                raise VideoProcessingDataValidationError(
-                    f"Failed to get the data of a video because of a ValidationError, database seems corrupt: {str(e)}"
-                ) from e
-
-    def get_by_channelid(
-        self, channel_id: str
-    ) -> Generator[VideoProcessingRecord, None, None]:
-        parameters: tuple = (channel_id,)
-        rows = self.cur.execute(
-            """
-        SELECT * FROM processed_videos
-        WHERE channel_id = ?
-        """,
-            parameters,
-        ).fetchall()
-        if not rows:
-            return None
-        for row in rows:
-            try:
-                yield VideoProcessingRecord.model_validate(dict(row))
-            except ValidationError as e:
-                raise VideoProcessingDataValidationError(
-                    f"Failed to get the data of a video because of a ValidationError, database seems corrupt: {str(e)}"
-                ) from e
-
-    def get_all(self) -> Generator[VideoProcessingRecord, None, None]:
-        rows = self.cur.execute("""
-        SELECT * FROM processed_videos
-        """).fetchall()
-        if not rows:
-            return None
-        for row in rows:
-            try:
-                yield VideoProcessingRecord.model_validate(dict(row))
-            except ValidationError as e:
-                raise VideoProcessingDataValidationError(
-                    f"Failed to get the data of a video because of a ValidationError, database seems corrupt: {str(e)}"
-                ) from e
-
-    def set_status(
-        self, video_id: str, status: VideoProcessingStatus, reset_attempts: bool = False
-    ) -> None:
-        """
-        Method to edit the status of a video
-        """
-        if reset_attempts:
-            retry_count = 0
-        else:
-            result = self.cur.execute(
                 """
-            SELECT retry_count FROM processed_videos
-            WHERE video_id = ?
-            """,
-                (video_id,),
+                SELECT 1 FROM templates
+                WHERE name = ?
+                """,
+                (name,),
             ).fetchone()
-            if result:
-                retry_count = result[0]
-            else:
-                retry_count = 0
+            is not None
+        )
 
-        try:
-            parameters: tuple = (status.value, int(retry_count), video_id)
-            self.cur.execute(
-                """
-            UPDATE processed_videos
-            SET status = ?,
-            retry_count = ?
-            WHERE video_id = ?;
+    def get_all(self) -> Generator[MetadataModel, None, None]:
+        """
+        Method to iterate over all templates.
+        """
+        rows = self.cur.execute(
+            """
+            SELECT * FROM templates
+            """
+        ).fetchall()
+
+        if not rows:
+            return
+
+        for row in rows:
+            try:
+                yield MetadataModel.model_validate(dict(row))
+            except ValidationError:
+                raise
+
+    def list_templates(
+        self,
+        pattern: list[Literal["name", "description", "tags", "prompt_file_name"]],
+    ) -> Generator[str, None, None]:
+        """
+        Method to list all the availible templates
+        """
+        search_pattern = ", ".join(pattern)
+        templates = self.cur.execute(
+            f"""
+            SELECT {search_pattern} FROM templates
             """,
-                parameters,
-            )
-            self.conn.commit()
-        except IntegrityError as e:
-            raise DBWritingError(
-                f"Failed to write to DB while updating the status to {status} for {video_id} because a database operand violated a constraint: {str(e)}"
-            )
-        except OperationalError as e:
-            raise DBWritingError(
-                f"Failed to write to DB while updating the status to {status} for {video_id} because of an operational Error: {str(e)}"
-            ) from e
+        ).fetchall()
+        if not templates:
+            return
+
+        for extracted_pattern in templates:
+            try:
+                yield json.dumps(dict(extracted_pattern))
+            except ValidationError:
+                raise
 
     def close(self) -> None:
         self.conn.close()
@@ -272,19 +233,3 @@ class VideoProcessingRepository:
         self.conn: Connection = sqlite3.connect(str(self.db_path))
         self.conn.row_factory = sqlite3.Row
         self.cur: Cursor = self.conn.cursor()
-
-
-if __name__ == "__main__":
-    vcr = VideoProcessingRepository()
-    vid: Video = Video(
-        title="sometitle",
-        url="someurl",
-        author="randomauthor",
-        published="someday",
-        video_id="ai90a7di7hk",
-        channel_id="somechannelid",
-    )
-
-    vcr.create(vid=vid)
-    result = vcr.get("ai90a7di7hk")
-    print(result)
