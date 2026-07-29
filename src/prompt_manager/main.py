@@ -21,13 +21,17 @@ def handle_add(args):
 def handle_list(args):
     template_repo = PromptTemplateRepository()
     if args.all:
-        results = template_repo.get_all()
-        for result in results:
-            print(json.dumps(result.__dict__))
+        entries = template_repo.get_all()
+        for entry in entries:
+            print(json.dumps(entry.__dict__))
+    elif args.fields:
+        entries = template_repo.list_templates(args.fields)
+        for entry in entries:
+            print(json.dumps(entry))
     else:
-        templates = template_repo.list_templates(args.fields)
-        for template in templates:
-            print(json.dumps(template))
+        entries = template_repo.list_templates(["name"])
+        for entry in entries:
+            print(entry["name"])
 
 
 def handle_render(args):
@@ -53,10 +57,11 @@ def main():
     list_fields_exlcusives = list_parser.add_mutually_exclusive_group(required=False)
     list_fields_exlcusives.add_argument(
         "--fields",
-        help="Which fields should be displayed. Availible options: name, description, tags, prompt_file_name. More than one field can be selected. Default: name",
+        help="""Which fields should be displayed. 
+            Availible options: name, description, tags, prompt_file_name. More than one field can be selected. 
+            Output format: jsonl""",
         nargs="+",
         choices=["name", "description", "tags", "prompt_file_name"],
-        default=["name"],
     )
     list_fields_exlcusives.add_argument(
         "--all",
