@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class MetadataModel(BaseModel):
     name: str
-    description: str
+    description: str | None
     tags: list[str] | str
     prompt_file_name: str
 

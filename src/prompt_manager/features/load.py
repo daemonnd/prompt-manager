@@ -30,11 +30,11 @@ def load_prompt(prompt_file_name: str):
         with open(path, "r") as f:
             return f.read()
     except IsADirectoryError as e:
-        print(f"The config file is a directory: {str(e)}")
+        raise
     except FileNotFoundError as e:
-        print(f"The config file has not been found at {path}: {str(e)}")
+        raise
     except PermissionError as e:
-        print(f"Permission Error while opening the config file at {path}: {str(e)}")
+        raise
 
 
 if __name__ == "__main__":
