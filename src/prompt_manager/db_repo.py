@@ -141,25 +141,16 @@ class PromptTemplateRepository:
     def get(
         self,
         name: str,
-        pattern: list[Literal["name", "description", "tags", "prompt_file_name"]] = [
-            "name",
-            "description",
-            "tags",
-            "prompt_file_name",
-        ],
     ) -> MetadataModel | None:
         """
         Method to get a template by name.
         """
         row = self.cur.execute(
             """
-            SELECT ? FROM templates
+            SELECT * FROM templates
             WHERE name = ?
             """,
-            (
-                pattern,
-                name,
-            ),
+            (name,),
         ).fetchone()
 
         if row is None:
@@ -207,9 +198,12 @@ class PromptTemplateRepository:
     def list_templates(
         self,
         pattern: list[Literal["name", "description", "tags", "prompt_file_name"]],
-    ) -> Generator[str, None, None]:
+    ) -> Generator[dict, None, None]:
         """
-        Method to list all the availible templates
+        Method to list the availible templates
+        It returns a dict because it can explicitally return only some fields.
+        Not recommended for internal usage, get_all is better for that.
+        Used to display custom lists of the templates
         """
         search_pattern = ", ".join(pattern)
         templates = self.cur.execute(
@@ -222,12 +216,22 @@ class PromptTemplateRepository:
 
         for extracted_pattern in templates:
             try:
-                yield json.dumps(dict(extracted_pattern))
+                yield dict(extracted_pattern)
             except ValidationError:
                 raise
 
     def close(self) -> None:
         self.conn.close()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """calls close(), for context managers"""
+        self.close()
+
+    def __enter__(self):
+        """calls open(), for context manager"""
+        self.close()  # close if it got opened by __init__
+        self.open()
+        return self
 
     def open(self) -> None:
         self.conn: Connection = sqlite3.connect(str(self.db_path))
