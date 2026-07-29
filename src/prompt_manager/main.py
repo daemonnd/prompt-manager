@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import json
 
 from prompt_manager.features.create import CreateTemplate
 from prompt_manager.features.render import render_template
@@ -19,9 +20,14 @@ def handle_add(args):
 
 def handle_list(args):
     template_repo = PromptTemplateRepository()
-    templates = template_repo.list_templates(args.fields)
-    for template in templates:
-        print(template)
+    if args.all:
+        results = template_repo.get_all()
+        for result in results:
+            print(json.dumps(result.__dict__))
+    else:
+        templates = template_repo.list_templates(args.fields)
+        for template in templates:
+            print(json.dumps(template))
 
 
 def handle_render(args):
@@ -44,12 +50,18 @@ def main():
     render_parser.set_defaults(func=handle_render)
 
     list_parser = subparsers.add_parser("list", help="list availible prompt templates")
-    list_parser.add_argument(
+    list_fields_exlcusives = list_parser.add_mutually_exclusive_group(required=False)
+    list_fields_exlcusives.add_argument(
         "--fields",
         help="Which fields should be displayed. Availible options: name, description, tags, prompt_file_name. More than one field can be selected. Default: name",
         nargs="+",
         choices=["name", "description", "tags", "prompt_file_name"],
         default=["name"],
+    )
+    list_fields_exlcusives.add_argument(
+        "--all",
+        help="Display each field. Equivalent to '--fields name description tags prompt_file_name'",
+        action="store_true",
     )
     list_parser.set_defaults(func=handle_list)
 
