@@ -1,10 +1,17 @@
 import string
+from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.features.load import load_prompt, load_template
 import pyperclip
 
+template_repo = PromptTemplateRepository()
+
 
 def render_template(name: str):
-    prompt: str = load_prompt(load_template(f"{name}.toml").prompt_file_name)
+    template = template_repo.get(name)
+    if template is None:
+        print(f"No prompt template with name '{name}' found in the database.")
+        return
+    prompt: str = load_prompt(prompt_file_name=template.prompt_file_name)
     formatter = string.Formatter()
 
     placeholders: list[str] = []
