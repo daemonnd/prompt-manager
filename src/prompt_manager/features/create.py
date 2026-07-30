@@ -1,13 +1,14 @@
 from prompt_manager.db_repo import PromptTemplateRepository
+from prompt_manager.features.errors import PromptFileWritingError
 from prompt_manager.inputs.prompts import (
     get_description_session,
     get_prompt_session,
     get_tags_session,
     get_template_session,
 )
-from prompt_manager.models import MetadataModel, PromptTemplateModel
+from prompt_manager.models import PromptTemplateModel
 from pathlib import Path
-from prompt_manager.constants import PROMPT_TEMPLATES, PROMPTS_DIR
+from prompt_manager.constants import PROMPTS_DIR
 
 
 class CreateTemplate:
@@ -73,9 +74,11 @@ class CreateTemplate:
         try:
             with open(prompt_path, "w") as f:
                 f.write(prompt)
-        except IsADirectoryError:
-            raise
-        except FileNotFoundError:
-            raise
+        except IsADirectoryError as e:
+            raise PromptFileWritingError(
+                f"Could not open '{prompt_path}', because it is a dirctory: {str(e)}"
+            ) from e
         except PermissionError:
-            raise
+            raise PromptFileWritingError(
+                f"Could not write to '{prompt_path}', because of a permission error: {str(e)}"
+            ) from e

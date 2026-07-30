@@ -1,10 +1,15 @@
 from argparse import ArgumentParser
+import logging
 import json
 
+from prompt_manager.errors import TemplateDBError
 from prompt_manager.features.create import CreateTemplate
+from prompt_manager.features.errors import TemplateCreationError
 from prompt_manager.features.render import render_template
 from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.models import MetadataModel
+
+logger = logging.getLogger(__name__)
 
 
 def handle_add(args):
@@ -13,9 +18,18 @@ def handle_add(args):
     # ask the user for input
     data = creator.get_data()
     # save the raw prompt to a file
-    creator.save_prompt(prompt=data.prompt, prompt_file_name=data.prompt_file_name)
-    # add a db entry containing the metadata of the template
-    template_repo.create_new(data=MetadataModel.from_template(data))
+    try:
+        creator.save_prompt(prompt=data.prompt, prompt_file_name=data.prompt_file_name)
+        # add a db entry containing the metadata of the template
+        template_repo.create_new(data=MetadataModel.from_template(data))
+    except TemplateCreationError as e:
+        logger.error(
+            f"Failed to save the prompt for prompt template '{data.name}': {str(e)}"
+        )
+    except TemplateDBError as e:
+        logger.error(
+            f"Failed to write template '{data.name}' metadata to database: {str(e)}"
+        )
 
 
 def handle_list(args):

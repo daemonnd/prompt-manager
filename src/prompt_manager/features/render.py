@@ -1,6 +1,7 @@
 import string
 from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.features.load import load_prompt, load_template
+from prompt_manager.features.errors import TemplateNotFoundError
 import pyperclip
 
 template_repo = PromptTemplateRepository()
@@ -9,8 +10,9 @@ template_repo = PromptTemplateRepository()
 def render_template(name: str):
     template = template_repo.get(name)
     if template is None:
-        print(f"No prompt template with name '{name}' found in the database.")
-        return
+        raise TemplateNotFoundError(
+            f"No prompt template with name '{name}' found in the database."
+        )
     prompt: str = load_prompt(prompt_file_name=template.prompt_file_name)
     formatter = string.Formatter()
 

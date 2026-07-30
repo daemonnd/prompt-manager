@@ -7,6 +7,12 @@ from typing import Any, Generator, Literal
 from pydantic import ValidationError
 
 from prompt_manager.constants import DATABASE_DIR
+from prompt_manager.errors import (
+    DBDataValidationError,
+    DBIntegrityError,
+    DBOperationalError,
+    InternalDBError,
+)
 from prompt_manager.models import MetadataModel
 
 
@@ -36,8 +42,8 @@ class PromptTemplateRepository:
         Method for adding a template to the database.
         """
         if isinstance(data.tags, list):
-            raise ValueError(
-                f"data.tags cannot be a list for using with sqlite, but it is one: {data.tags}"
+            raise InternalDBError(
+                f"ValueError: data.tags cannot be a list for using with sqlite, but it is one: {data.tags}"
             )
         try:
             parameters: tuple = (
@@ -55,11 +61,11 @@ class PromptTemplateRepository:
             )
             self.conn.commit()
         except IntegrityError as e:
-            raise IntegrityError(
+            raise DBIntegrityError(
                 f"IntegrityError: Failed to write to the database while creating template '{data.name}' because a database constraint was violated: {str(e)}"
             ) from e
         except OperationalError as e:
-            raise OperationalError(
+            raise DBOperationalError(
                 f"Failed to write to the database while creating template '{data.name}' because of an operational error: {str(e)}"
             ) from e
 
@@ -68,8 +74,8 @@ class PromptTemplateRepository:
         Method to update an existing template.
         """
         if isinstance(data.tags, list):
-            raise ValueError(
-                f"data.tags cannot be a list for using with sqlite, but it is one: {data.tags}"
+            raise InternalDBError(
+                f"ValueError: data.tags cannot be a list for using with sqlite, but it is one: {data.tags}"
             )
         try:
             parameters: tuple = (
@@ -98,11 +104,11 @@ class PromptTemplateRepository:
                     f"Expected to update 1 row for '{name}', updated {self.cur.rowcount}"
                 )
         except IntegrityError as e:
-            raise IntegrityError(
+            raise DBIntegrityError(
                 f"Failed to write to the database while updating template '{data.name}' because a database constraint was violated: {str(e)}"
             ) from e
         except OperationalError as e:
-            raise OperationalError(
+            raise DBOperationalError(
                 f"Failed to write to the database while updating template '{data.name}' because of an operational error: {str(e)}"
             ) from e
 
@@ -112,8 +118,8 @@ class PromptTemplateRepository:
         """
         try:
             if not self.exists(name):
-                raise ValueError(
-                    f"There is no template with the name '{name}' in the database."
+                raise InternalDBError(
+                    f"ValueError: There is no template with the name '{name}' in the database."
                 )
 
             self.cur.execute(
@@ -126,15 +132,15 @@ class PromptTemplateRepository:
             self.conn.commit()
 
             if self.cur.rowcount != 1:
-                raise Exception(
+                raise InternalDBError(
                     f"Expected to delete 1 row for '{name}', deleted {self.cur.rowcount}"
                 )
         except IntegrityError as e:
-            raise IntegrityError(
+            raise DBIntegrityError(
                 f"Failed to write to the database while deleting template '{name}' because a database constraint was violated: {str(e)}"
             ) from e
         except OperationalError as e:
-            raise OperationalError(
+            raise DBOperationalError(
                 f"Failed to write to the database while deleting template '{name}' because of an operational error: {str(e)}"
             ) from e
 
@@ -158,8 +164,10 @@ class PromptTemplateRepository:
 
         try:
             return MetadataModel.model_validate(dict(row))
-        except ValidationError:
-            raise
+        except ValidationError as e:
+            raise DBDataValidationError(
+                f"The database seems to have invalid data: {str(e)}"
+            ) from e
 
     def exists(self, name: str) -> bool:
         """
@@ -193,7 +201,9 @@ class PromptTemplateRepository:
             try:
                 yield MetadataModel.model_validate(dict(row))
             except ValidationError:
-                raise
+            raise DBDataValidationError(
+                f"The database seems to have invalid data: {str(e)}"
+            ) from e
 
     def list_templates(
         self,
@@ -218,7 +228,9 @@ class PromptTemplateRepository:
             try:
                 yield dict(extracted_pattern)
             except ValidationError:
-                raise
+            raise DBDataValidationError(
+                f"The database seems to have invalid data: {str(e)}"
+            ) from e
 
     def close(self) -> None:
         self.conn.close()
