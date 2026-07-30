@@ -200,10 +200,10 @@ class PromptTemplateRepository:
         for row in rows:
             try:
                 yield MetadataModel.model_validate(dict(row))
-            except ValidationError:
-            raise DBDataValidationError(
-                f"The database seems to have invalid data: {str(e)}"
-            ) from e
+            except ValidationError as e:
+                raise DBDataValidationError(
+                    f"The database seems to have invalid data: {str(e)}"
+                ) from e
 
     def list_templates(
         self,
@@ -227,10 +227,10 @@ class PromptTemplateRepository:
         for extracted_pattern in templates:
             try:
                 yield dict(extracted_pattern)
-            except ValidationError:
-            raise DBDataValidationError(
-                f"The database seems to have invalid data: {str(e)}"
-            ) from e
+            except ValidationError as e:
+                raise DBDataValidationError(
+                    f"The database seems to have invalid data: {str(e)}"
+                ) from e
 
     def close(self) -> None:
         self.conn.close()

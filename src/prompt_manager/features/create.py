@@ -80,7 +80,7 @@ class CreateTemplate:
             raise PromptFileWritingError(
                 f"Could not open '{prompt_path}', because it is a dirctory: {str(e)}"
             ) from e
-        except PermissionError:
+        except PermissionError as e:
             raise PromptFileWritingError(
                 f"Could not write to '{prompt_path}', because of a permission error: {str(e)}"
             ) from e
