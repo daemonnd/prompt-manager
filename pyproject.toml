@@ -10,13 +10,13 @@ requires-python = ">=3.14"
 dependencies = []
 
 
-#[project.scripts]
-#vidsift = "vidsift.main:main"
+[project.scripts]
+prompt_manager = "prompt_manager.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 [tool.setuptools.package-data]
-vidsift = ["defaults/*"]
+prompt_manager = ["defaults/*"]
 
 [dependency-groups]
 dev = ["debugpy>=1.8.20", "pytest>=9.0.3"]

@@ -1,0 +1,45 @@
+"""
+File to parse the config and transform the config into variables
+"""
+
+import tomllib
+from pathlib import Path
+from tomllib import TOMLDecodeError
+
+from pydantic import ValidationError
+
+from prompt_manager.config.errors import (
+    ConfigFileNotFoundError,
+    ConfigFilePermissionError,
+    ConfigValidationError,
+    InvalidConfigError,
+)
+from prompt_manager.config.models import AppConfig
+
+from prompt_manager.paths import CONFIG_FILE
+
+
+def load_config(config_path: Path = CONFIG_FILE) -> AppConfig:
+    try:
+        with open(config_path, mode="rb") as f:
+            return AppConfig.model_validate(tomllib.load(f))
+    except TOMLDecodeError as e:
+        raise InvalidConfigError(
+            f"Unable to decode TOML in {config_path}: {str(e)}"
+        ) from e
+    except UnicodeDecodeError as e:
+        raise InvalidConfigError(f"Unable to decode TOML in {config_path}: {str(e)}")
+    except IsADirectoryError as e:
+        raise ConfigFileNotFoundError(
+            f"The config file is a directory: {str(e)}"
+        ) from e
+    except FileNotFoundError as e:
+        raise ConfigFileNotFoundError(
+            # f"The config file has not been found at {config_path}: {str(e)}. You may need to run `prompt init` for getting the default config"
+        ) from e
+    except PermissionError as e:
+        raise ConfigFilePermissionError(
+            f"Permission Error while opening the config file at {config_path}: {str(e)}"
+        ) from e
+    except ValidationError as e:
+        raise ConfigValidationError(f"The Config seems to be wrong: {str(e)}") from e
