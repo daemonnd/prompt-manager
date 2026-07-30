@@ -8,7 +8,7 @@ from prompt_manager.inputs.prompts import (
 )
 from prompt_manager.models import PromptTemplateModel
 from pathlib import Path
-from prompt_manager.constants import PROMPTS_DIR
+from prompt_manager.paths import PROMPTS_DIR
 
 
 class CreateTemplate:
@@ -71,7 +71,9 @@ class CreateTemplate:
         Method to save the prompt template itselft to a file
         """
         prompt_path: Path = PROMPTS_DIR / prompt_file_name
+        PROMPTS_DIR.mkdir(parents=True, exist_ok=True)
         try:
+            prompt_path.touch(exist_ok=True)
             with open(prompt_path, "w") as f:
                 f.write(prompt)
         except IsADirectoryError as e:

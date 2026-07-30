@@ -1,6 +1,7 @@
 import tomllib
 from tomllib import TOMLDecodeError
-from prompt_manager.constants import PROMPT_TEMPLATES, PROMPTS_DIR
+from prompt_manager.features.errors import PromptFileReadingError
+from prompt_manager.paths import PROMPT_TEMPLATES, PROMPTS_DIR
 from prompt_manager.models import MetadataModel
 from pydantic import ValidationError
 
@@ -29,16 +30,7 @@ def load_prompt(prompt_file_name: str):
         path = PROMPTS_DIR / prompt_file_name
         with open(path, "r") as f:
             return f.read()
-    except IsADirectoryError as e:
-        raise
-    except FileNotFoundError as e:
-        raise
-    except PermissionError as e:
-        raise
-
-
-if __name__ == "__main__":
-    template = load_template("summary.toml")
-    print(f"template: {template}")
-    print("\n")
-    print(f"prompt: {load_prompt(template.metadata.prompt_file_name)}")
+    except (IsADirectoryError, FileNotFoundError, PermissionError) as e:
+        raise PromptFileReadingError(
+            f"Could no read prompt file '{path}': {str(e)}"
+        ) from e

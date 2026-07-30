@@ -72,7 +72,7 @@ class PlaceholderValidator(Validator):
     """
 
     def validate(self, document: Document) -> None:
-        raise NoeImplementedError("Make escaping { possible and {{ is not allowed")
+        # raise NoeImplementedError("Make escaping { possible and {{ is not allowed")
         text = document.text
 
         try:

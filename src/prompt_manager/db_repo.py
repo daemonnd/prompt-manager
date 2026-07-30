@@ -6,7 +6,7 @@ from typing import Any, Generator, Literal
 
 from pydantic import ValidationError
 
-from prompt_manager.constants import DATABASE_DIR
+from prompt_manager.paths import DATABASE_DIR
 from prompt_manager.errors import (
     DBDataValidationError,
     DBIntegrityError,
