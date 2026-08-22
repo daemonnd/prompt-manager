@@ -3,15 +3,20 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "prompt_manager"
-version = "0.1.0"
+name = "prompt"
+version = "1.0"
 requires-python = ">=3.14"
 
-dependencies = []
+dependencies = [
+    "platformdirs>=4.11.3",
+    "prompt-toolkit>=3.0.53",
+    "pydantic>=2.13.4",
+    "pyperclip>=1.11.0",
+]
 
 
 [project.scripts]
-prompt_manager = "prompt_manager.main:main"
+prompt = "prompt_manager.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
