@@ -53,6 +53,10 @@ def handle_list(args):
 def handle_render(args):
     render_template(args.template)
 
+def autocomplete_template_names(prefix: str, parsed_args, **kwargs):
+    template_repo = PromptTemplateRepository()
+    return list(template_repo.get_template_name_by_prefix(prefix=prefix))
+
 
 def main():
     parser = ArgumentParser(
@@ -66,7 +70,7 @@ def main():
     render_parser = subparsers.add_parser(
         "render", help="render a prompt with filled in variables"
     )
-    render_parser.add_argument("template")
+    render_parser.add_argument("template").completer = autocomplete_template_names
     render_parser.set_defaults(func=handle_render)
 
     list_parser = subparsers.add_parser("list", help="list availible prompt templates")
