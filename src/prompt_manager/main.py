@@ -1,12 +1,14 @@
-from argparse import ArgumentParser
-import logging
 import json
+import logging
+from argparse import ArgumentParser
 
+import argcomplete
+
+from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.errors import TemplateDBError
 from prompt_manager.features.create import CreateTemplate
 from prompt_manager.features.errors import TemplateCreationError
 from prompt_manager.features.render import render_template
-from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.models import MetadataModel
 
 logger = logging.getLogger(__name__)
@@ -84,6 +86,7 @@ def main():
     )
     list_parser.set_defaults(func=handle_list)
 
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
     if hasattr(args, "func"):
         args.func(args)
