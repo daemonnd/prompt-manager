@@ -6,7 +6,10 @@ from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.containers import HSplit, Window
-from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
+from prompt_toolkit.layout.controls import (
+    BufferControl,
+    FormattedTextControl,
+)
 from prompt_toolkit.styles import Style
 from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.features.load import load_prompt
@@ -32,7 +35,14 @@ class TemplateSearch:
                 )
             )
 
-    def search_templates(self, query: str, limit: int = 10) -> list:
+        self.results = []
+        self.selected_index = 0
+
+    def search_templates(
+        self,
+        query: str,
+        limit: int = 10,
+    ) -> list:
         query = query.strip()
 
         if not query:
@@ -129,22 +139,20 @@ class TemplateSearch:
                 break
 
         end_word = None
+
         for index, match in enumerate(words):
             if match.start() < end <= match.end():
                 end_word = index
-            # end_word = next(
-            # (
-            # index
-            # for index, match in enumerate(words)
-            # if match.start() < end <= match.end()
-            # ),
-            # None,
-        # )
+                break
 
         if start_word is None or end_word is None:
             return None
 
-        context_start_word = max(0, start_word - 3)
+        context_start_word = max(
+            0,
+            start_word - 3,
+        )
+
         context_end_word = min(
             len(words) - 1,
             end_word + 3,
@@ -165,7 +173,11 @@ class TemplateSearch:
             context_end < len(prompt),
         )
 
-    def _format_results(self, results, query: str):
+    def _format_results(
+        self,
+        results,
+        query: str,
+    ):
         if not results:
             return "No matching templates."
 
@@ -173,18 +185,26 @@ class TemplateSearch:
 
         for index, (template, score, field_scores) in enumerate(
             results,
-            start=1,
         ):
+            is_selected = index == self.selected_index
+
+            if is_selected:
+                number_style = "class:selected-number"
+                name_style = "class:selected-name"
+            else:
+                number_style = "class:result-number"
+                name_style = "class:name"
+
             fragments.append(
                 (
-                    "class:result-number",
-                    f"{index}. ",
+                    number_style,
+                    f"{index + 1}. ",
                 )
             )
 
             fragments.append(
                 (
-                    "class:name",
+                    name_style,
                     template.name,
                 )
             )
@@ -295,20 +315,38 @@ class TemplateSearch:
 
         return fragments
 
-    def run(self):
+    def _update_results(
+        self,
+        results_control,
+        query: str,
+    ):
+        self.results = self.search_templates(query)
+
+        if self.results:
+            self.selected_index = min(
+                self.selected_index,
+                len(self.results) - 1,
+            )
+        else:
+            self.selected_index = 0
+
+        results_control.text = self._format_results(
+            self.results,
+            query,
+        )
+
+        get_app().invalidate()
+
+    def run(self) -> PromptTemplateModel | None:
         results_control = FormattedTextControl("Type to search...")
 
         def on_search_changed(buffer):
-            query = buffer.text
+            self.selected_index = 0
 
-            results = self.search_templates(query)
-
-            results_control.text = self._format_results(
-                results,
-                query,
+            self._update_results(
+                results_control,
+                buffer.text,
             )
-
-            get_app().invalidate()
 
         search_buffer = Buffer(
             name="search",
@@ -318,9 +356,82 @@ class TemplateSearch:
 
         key_bindings = KeyBindings()
 
+        @key_bindings.add("down")
+        def _(event):
+            if not self.results:
+                return
+
+            if self.selected_index < len(self.results) - 1:
+                self.selected_index += 1
+            else:
+                self.selected_index = 0
+
+            results_control.text = self._format_results(
+                self.results,
+                search_buffer.text,
+            )
+
+            event.app.invalidate()
+
+        @key_bindings.add("up")
+        def _(event):
+            if not self.results:
+                return
+
+            if self.selected_index > 0:
+                self.selected_index -= 1
+            else:
+                self.selected_index = len(self.results) - 1
+
+            results_control.text = self._format_results(
+                self.results,
+                search_buffer.text,
+            )
+
+            event.app.invalidate()
+
+        @key_bindings.add("c-j")
+        def _(event):
+            if not self.results:
+                return
+
+            if self.selected_index < len(self.results) - 1:
+                self.selected_index += 1
+            else:
+                self.selected_index = 0
+
+            results_control.text = self._format_results(
+                self.results,
+                search_buffer.text,
+            )
+
+            event.app.invalidate()
+
+        @key_bindings.add("c-k")
+        def _(event):
+            if not self.results:
+                return
+
+            if self.selected_index > 0:
+                self.selected_index -= 1
+            else:
+                self.selected_index = len(self.results) - 1
+
+            results_control.text = self._format_results(
+                self.results,
+                search_buffer.text,
+            )
+
+            event.app.invalidate()
+
         @key_bindings.add("enter")
         def _(event):
-            event.app.exit(search_buffer.text)
+            if not self.results:
+                return
+
+            template = self.results[self.selected_index][0]
+
+            event.app.exit(template)
 
         @key_bindings.add("escape")
         def _(event):
@@ -355,6 +466,8 @@ class TemplateSearch:
                 "prompt-label": "bold",
                 "prompt": "",
                 "match": "bold",
+                "selected-number": "bold fg:ansicyan",
+                "selected-name": "bold reverse",
             }
         )
 

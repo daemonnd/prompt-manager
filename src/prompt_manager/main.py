@@ -55,7 +55,7 @@ def handle_render(args):
 
 def handle_search(args):
     searcher = TemplateSearch()
-    searcher.run()
+    return searcher.run()
 
 
 def main():
