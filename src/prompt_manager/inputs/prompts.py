@@ -74,3 +74,9 @@ def get_tags_session(tags_list: list[str]):
         auto_suggest=AutoSuggestFromHistory(),
         history=InMemoryHistory(),
     )
+
+
+def get_search_prompt():
+    return PromptSession(
+        validator=LengthValidator(min_length=1),
+    )

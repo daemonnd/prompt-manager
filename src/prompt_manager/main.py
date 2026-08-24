@@ -7,6 +7,7 @@ from prompt_manager.features.create import CreateTemplate
 from prompt_manager.features.errors import TemplateCreationError
 from prompt_manager.features.render import render_template
 from prompt_manager.db_repo import PromptTemplateRepository
+from prompt_manager.features.search import TemplateSearch
 from prompt_manager.models import MetadataModel
 
 logger = logging.getLogger(__name__)
@@ -52,6 +53,11 @@ def handle_render(args):
     render_template(args.template)
 
 
+def handle_search(args):
+    searcher = TemplateSearch()
+    searcher.run()
+
+
 def main():
     parser = ArgumentParser(
         prog="prompt-manager",
@@ -83,6 +89,11 @@ def main():
         action="store_true",
     )
     list_parser.set_defaults(func=handle_list)
+
+    search_parser = subparsers.add_parser(
+        "search", help="search for prompt templates matching the search criteria"
+    )
+    search_parser.set_defaults(func=handle_search)
 
     args = parser.parse_args()
     if hasattr(args, "func"):
