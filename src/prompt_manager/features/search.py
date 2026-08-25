@@ -429,10 +429,10 @@ class TemplateSearch:
         @key_bindings.add("enter")
         def _(event):
             if not self.results:
+                event.app.exit(None)
                 return
 
             template = self.results[self.selected_index][0]
-
             event.app.exit(template)
 
         @key_bindings.add("escape")
