@@ -34,7 +34,9 @@ class TemplateSearch:
                     prompt=load_prompt(entry.prompt_file_name),
                 )
             )
+        self.reset()
 
+    def reset(self):
         self.results = []
         self.selected_index = 0
 
@@ -478,4 +480,5 @@ class TemplateSearch:
             full_screen=True,
         )
 
+        self.reset()
         return application.run()
