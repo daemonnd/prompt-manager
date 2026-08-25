@@ -1,8 +1,12 @@
-from argparse import ArgumentParser
 from rich import print as rprint
 import logging
 import json
+import logging
+from argparse import ArgumentParser
 
+import argcomplete
+
+from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.errors import TemplateDBError
 from prompt_manager.features.create import CreateTemplate
 from prompt_manager.features.errors import TemplateCreationError
@@ -58,6 +62,11 @@ def handle_render(args):
     render_template(args.template)
 
 
+def autocomplete_template_names(prefix: str, parsed_args, **kwargs):
+    template_repo = PromptTemplateRepository()
+    return list(template_repo.get_template_name_by_prefix(prefix=prefix))
+
+
 def handle_search(args):
     searcher = TemplateSearch()
     result = searcher.run()
@@ -93,7 +102,7 @@ def main():
     render_parser = subparsers.add_parser(
         "render", help="render a prompt with filled in variables"
     )
-    render_parser.add_argument("template")
+    render_parser.add_argument("template").completer = autocomplete_template_names
     render_parser.set_defaults(func=handle_render)
 
     list_parser = subparsers.add_parser("list", help="list availible prompt templates")
@@ -123,6 +132,7 @@ def main():
     )
     run_parser.set_defaults(func=handle_run)
 
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
     if hasattr(args, "func"):
         args.func(args)

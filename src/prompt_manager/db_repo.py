@@ -6,14 +6,10 @@ from typing import Any, Generator, Literal
 
 from pydantic import ValidationError
 
-from prompt_manager.paths import DATABASE_DIR
-from prompt_manager.errors import (
-    DBDataValidationError,
-    DBIntegrityError,
-    DBOperationalError,
-    InternalDBError,
-)
+from prompt_manager.errors import (DBDataValidationError, DBIntegrityError,
+                                   DBOperationalError, InternalDBError)
 from prompt_manager.models import MetadataModel
+from prompt_manager.paths import DATABASE_DIR
 
 
 class PromptTemplateRepository:
@@ -231,6 +227,19 @@ class PromptTemplateRepository:
                 raise DBDataValidationError(
                     f"The database seems to have invalid data: {str(e)}"
                 ) from e
+
+    def get_template_name_by_prefix(self, prefix: str) -> Generator[str, None, None]:
+        """
+        Method to only return template names that match the prefix. used for autocompletion.
+        """
+        rows = self.cur.execute("""
+            SELECT name
+            FROM templates
+            WHERE name LIKE ?
+        """, (f"{prefix}%",))
+
+        for row in rows:
+            yield row["name"]
 
     def close(self) -> None:
         self.conn.close()
