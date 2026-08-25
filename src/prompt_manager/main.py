@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from rich import print as rprint
 import logging
 import json
 
@@ -7,9 +8,14 @@ from prompt_manager.features.create import CreateTemplate
 from prompt_manager.features.errors import TemplateCreationError
 from prompt_manager.features.render import render_template
 from prompt_manager.db_repo import PromptTemplateRepository
+from prompt_manager.features.search import TemplateSearch
 from prompt_manager.models import MetadataModel
 
 logger = logging.getLogger(__name__)
+
+
+def _clear_terminal():
+    print("\033[2J\033[H", end="")
 
 
 def handle_add(args):
@@ -45,11 +51,32 @@ def handle_list(args):
     else:
         entries = template_repo.list_templates(["name"])
         for entry in entries:
-            print(entry["name"])
+            rprint(entry["name"])
 
 
 def handle_render(args):
     render_template(args.template)
+
+
+def handle_search(args):
+    searcher = TemplateSearch()
+    result = searcher.run()
+    if result is not None:
+        render_template(result.name)
+
+
+def handle_run(args):
+    searcher = TemplateSearch()
+    while True:
+        result = searcher.run()
+        _clear_terminal()
+        if result is None:
+            rprint("[red]No matching templates found to render.[/red]")
+            input("Press <ENTER> to continue...")
+        else:
+            rprint(f"Rendering Template: [bold][cyan]{result.name}[/cyan][/bold]")
+            render_template(result.name)
+            input("Press <ENTER> to continue...")
 
 
 def main():
@@ -57,7 +84,9 @@ def main():
         prog="prompt-manager",
         description="A basic prompt manager that lets you manage prompt templates",
     )
-    subparsers = parser.add_subparsers()
+    subparsers = parser.add_subparsers(
+        required=True,
+    )
     add_parser = subparsers.add_parser("add", help="add a new prompt template")
     add_parser.set_defaults(func=handle_add)
 
@@ -83,6 +112,16 @@ def main():
         action="store_true",
     )
     list_parser.set_defaults(func=handle_list)
+
+    search_parser = subparsers.add_parser(
+        "search", help="search for prompt templates matching the search criteria"
+    )
+    search_parser.set_defaults(func=handle_search)
+
+    run_parser = subparsers.add_parser(
+        "run", help="Run the search and render the selected result infinitely"
+    )
+    run_parser.set_defaults(func=handle_run)
 
     args = parser.parse_args()
     if hasattr(args, "func"):
