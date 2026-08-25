@@ -13,6 +13,8 @@ dependencies = [
     "prompt-toolkit>=3.0.53",
     "pydantic>=2.13.4",
     "pyperclip>=1.11.0",
+    "rapidfuzz>=3.14.5",
+    "rich>=15.0.0",
 ]
 
 

@@ -3,6 +3,10 @@ from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.features.load import load_prompt, load_template
 from prompt_manager.features.errors import TemplateNotFoundError
 import pyperclip
+from rich import print as rprint
+from rich.console import Console
+
+console = Console()
 
 template_repo = PromptTemplateRepository()
 
@@ -29,4 +33,12 @@ def render_template(name: str):
     final_prompt = prompt.format(**values)
 
     pyperclip.copy(final_prompt)
+
+    width = console.width
+
+    left_dashes = (width - len(name)) // 2
+    right_dashes = width - len(name) - left_dashes
+
+    rprint(f"[magenta]{'-' * left_dashes}{name}{'-' * right_dashes}[/magenta]")
     print(final_prompt)
+    rprint(f"[magenta]{'-' * width}[/magenta]")
