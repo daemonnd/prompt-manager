@@ -21,3 +21,8 @@ class DBOperationalError(TemplateDBError):
 class DBDataValidationError(TemplateDBError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+
+class EditorError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

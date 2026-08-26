@@ -12,7 +12,6 @@ from prompt_manager.features.create import CreateTemplate
 from prompt_manager.features.errors import TemplateCreationError
 from prompt_manager.features.remove import remove_template
 from prompt_manager.features.render import render_template
-from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.features.search import TemplateSearch
 from prompt_manager.models import MetadataModel
 
