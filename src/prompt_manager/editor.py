@@ -17,7 +17,7 @@ class EditorInput:
         try:
             command = self._get_editor_command()
             command.append(temp_file_path)
-            self._write_to_file(command)
+            self._open_editor(command)
             return self._read_result(temp_file_path)
         finally:
             Path(temp_file_path).unlink()
@@ -28,9 +28,9 @@ class EditorInput:
             editor = "vim"
         return shlex.split(editor)
 
-    def _write_to_file(self, command: list[str]):
+    def _open_editor(self, command: list[str]):
         try:
-            result = subprocess.run(args=command, check=True)
+            result = subprocess.run(args=command, check=True, capture_output=True)
         except subprocess.CalledProcessError:
             raise EditorError(f"Failed to open editor for writing: {result.stderr}")
 
