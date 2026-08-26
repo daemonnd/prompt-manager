@@ -26,6 +26,11 @@ class LoggingConfig(BaseModel):
     file: FileLoggingConfig
 
 
+class EditorInputsConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    prompt: bool
+
+
 class AppConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     logging: LoggingConfig

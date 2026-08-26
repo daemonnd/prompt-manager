@@ -23,3 +23,10 @@ dependency_level = "WARNING"
 rotation = "midnight"        # D: Daily, H: Hourly, M: every minute, S: every second, midnight: at midnight
 retain_days = 14             # for how many days the logs should be kept
 utc_time = false             # true: UTC time, false: local time
+
+
+# ============================================================
+# editor inputs
+# ============================================================
+[editor_inputs]
+prompt = true # use the $EDITOR for prompt inputs, when false prompt asks for input
