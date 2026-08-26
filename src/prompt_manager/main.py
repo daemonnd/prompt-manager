@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 
 import argcomplete
 
+from prompt_manager.config.loader import load_config
 from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.errors import TemplateDBError
 from prompt_manager.features.create import CreateTemplate
@@ -22,7 +23,7 @@ def _clear_terminal():
     print("\033[2J\033[H", end="")
 
 
-def handle_add(args):
+def handle_add(args, config):
     creator = CreateTemplate()
     template_repo = PromptTemplateRepository()
     # ask the user for input
@@ -42,7 +43,7 @@ def handle_add(args):
         )
 
 
-def handle_list(args):
+def handle_list(args, config):
     template_repo = PromptTemplateRepository()
     if args.all:
         entries = template_repo.get_all()
@@ -58,7 +59,7 @@ def handle_list(args):
             rprint(entry["name"])
 
 
-def handle_render(args):
+def handle_render(args, config):
     render_template(args.template)
 
 
@@ -67,14 +68,14 @@ def autocomplete_template_names(prefix: str, parsed_args, **kwargs):
     return list(template_repo.get_template_name_by_prefix(prefix=prefix))
 
 
-def handle_search(args):
+def handle_search(args, config):
     searcher = TemplateSearch()
     result = searcher.run()
     if result is not None:
         render_template(result.name)
 
 
-def handle_run(args):
+def handle_run(args, config):
     searcher = TemplateSearch()
     while True:
         result = searcher.run()
@@ -88,7 +89,7 @@ def handle_run(args):
             input("Press <ENTER> to continue...")
 
 
-def handle_remove(args):
+def handle_remove(args, config):
     remove_template(args.template_name)
 
 
@@ -144,8 +145,10 @@ def main():
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
+
+    config = load_config()
     if hasattr(args, "func"):
-        args.func(args)
+        args.func(args, config)
 
 
 if __name__ == "__main__":
