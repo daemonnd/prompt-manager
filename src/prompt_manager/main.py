@@ -110,7 +110,7 @@ def main():
     render_parser.add_argument("template").completer = autocomplete_template_names
     render_parser.set_defaults(func=handle_render)
 
-    list_parser = subparsers.add_parser("list", help="list availible prompt templates")
+    list_parser = subparsers.add_parser("ls", help="list availible prompt templates")
     list_fields_exlcusives = list_parser.add_mutually_exclusive_group(required=False)
     list_fields_exlcusives.add_argument(
         "--fields",
