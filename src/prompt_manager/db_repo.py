@@ -6,8 +6,12 @@ from typing import Any, Generator, Literal
 
 from pydantic import ValidationError
 
-from prompt_manager.errors import (DBDataValidationError, DBIntegrityError,
-                                   DBOperationalError, InternalDBError)
+from prompt_manager.errors import (
+    DBDataValidationError,
+    DBIntegrityError,
+    DBOperationalError,
+    InternalDBError,
+)
 from prompt_manager.models import MetadataModel
 from prompt_manager.paths import DATABASE_DIR
 
@@ -232,14 +236,41 @@ class PromptTemplateRepository:
         """
         Method to only return template names that match the prefix. used for autocompletion.
         """
-        rows = self.cur.execute("""
+        rows = self.cur.execute(
+            """
             SELECT name
             FROM templates
             WHERE name LIKE ?
-        """, (f"{prefix}%",))
+        """,
+            (f"{prefix}%",),
+        )
 
         for row in rows:
             yield row["name"]
+
+    def remove_template(self, name: str) -> None:
+        try:
+            self.cur.execute(
+                """
+            DELETE FROM templates
+            WHERE name = ?
+            """,
+                (name,),
+            )
+            self.conn.commit()
+
+            if self.cur.rowcount != 1:
+                raise InternalDBError(
+                    f"Expected to delete 1 row for '{name}', deleted {self.cur.rowcount}"
+                )
+        except IntegrityError as e:
+            raise DBIntegrityError(
+                f"Failed to write to the database while deleting template '{name}' because a database constraint was violated: {str(e)}"
+            ) from e
+        except OperationalError as e:
+            raise DBOperationalError(
+                f"Failed to write to the database while deleting template '{name}' because of an operational error: {str(e)}"
+            ) from e
 
     def close(self) -> None:
         self.conn.close()
