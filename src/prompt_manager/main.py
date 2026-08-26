@@ -10,6 +10,7 @@ from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.errors import TemplateDBError
 from prompt_manager.features.create import CreateTemplate
 from prompt_manager.features.errors import TemplateCreationError
+from prompt_manager.features.remove import remove_template
 from prompt_manager.features.render import render_template
 from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.features.search import TemplateSearch
@@ -88,6 +89,10 @@ def handle_run(args):
             input("Press <ENTER> to continue...")
 
 
+def handle_remove(args):
+    remove_template(args.template_name)
+
+
 def main():
     parser = ArgumentParser(
         prog="prompt-manager",
@@ -131,6 +136,12 @@ def main():
         "run", help="Run the search and render the selected result infinitely"
     )
     run_parser.set_defaults(func=handle_run)
+
+    remove_parser = subparsers.add_parser(
+        "rm", help="Remove the selected prompt template"
+    )
+    remove_parser.add_argument("template_name").completer = autocomplete_template_names
+    remove_parser.set_defaults(func=handle_remove)
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
