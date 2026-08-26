@@ -1,4 +1,13 @@
+import logging
+from rich import print as rprint
+
+from prompt_toolkit.validation import ValidationError
+from prompt_toolkit.document import Document
+
+
+from prompt_manager.config.models import AppConfig
 from prompt_manager.db_repo import PromptTemplateRepository
+from prompt_manager.editor import EditorInput
 from prompt_manager.features.errors import PromptFileWritingError
 from prompt_manager.inputs.prompts import (
     get_description_session,
@@ -6,12 +15,18 @@ from prompt_manager.inputs.prompts import (
     get_tags_session,
     get_template_session,
 )
+from prompt_manager.inputs.validators import PlaceholderValidator
 from prompt_manager.models import PromptTemplateModel
 from pathlib import Path
 from prompt_manager.paths import PROMPTS_DIR
 
+logger = logging.getLogger(__name__)
+
 
 class CreateTemplate:
+    def __init__(self, config: AppConfig) -> None:
+        self.config: AppConfig = config
+
     def get_data(self) -> PromptTemplateModel:
         """
         Function that returns the metadata of the template as
@@ -55,9 +70,28 @@ class CreateTemplate:
                 f"Which tags should the new prompt template '{name}' get? \nFormat: 'summary,transcript,video' "
             )
             prompt_file_name = f"{name}.md"
-            prompt = get_prompt_session().prompt(
-                "Enter the prompt template, use '{}' for variables: \n"
-            )
+            if self.config.editor_inputs.prompt is False:
+                prompt = get_prompt_session().prompt(
+                    "Enter the prompt template, use '{}' for variables: \n"
+                )
+            else:
+                prompt = EditorInput().get_input()
+                for i in range(5):
+                    rprint(
+                        "[yellow]Your editor will open. \nEnter the prompt for the prompt template, use '{}' for placeholders.\nWhen done, save and exit.[/yellow]"
+                    )
+                    # input("Press <ENTER> to open the editor...")
+                    try:
+                        prompt = EditorInput().get_input()
+                        PlaceholderValidator().validate(document=Document(text=promp))
+                    except ValidationError as e:
+                        logger.warning(
+                            f"Failed to create a valid prompt because of the following error: {str(e)}",
+                            exc_info=True,
+                        )
+                    else:
+                        break
+
             return PromptTemplateModel(
                 name=name,
                 description=description,

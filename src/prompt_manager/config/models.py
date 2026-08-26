@@ -34,3 +34,4 @@ class EditorInputsConfig(BaseModel):
 class AppConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     logging: LoggingConfig
+    editor_inputs: EditorInputsConfig

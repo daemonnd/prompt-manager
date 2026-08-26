@@ -8,6 +8,7 @@ import argcomplete
 
 from prompt_manager.config.loader import load_config
 from prompt_manager.db_repo import PromptTemplateRepository
+from prompt_manager.editor import EditorInput
 from prompt_manager.errors import TemplateDBError
 from prompt_manager.features.create import CreateTemplate
 from prompt_manager.features.errors import TemplateCreationError
@@ -23,8 +24,13 @@ def _clear_terminal():
     print("\033[2J\033[H", end="")
 
 
+def autocomplete_template_names(prefix: str, parsed_args, **kwargs):
+    template_repo = PromptTemplateRepository()
+    return list(template_repo.get_template_name_by_prefix(prefix=prefix))
+
+
 def handle_add(args, config):
-    creator = CreateTemplate()
+    creator = CreateTemplate(config)
     template_repo = PromptTemplateRepository()
     # ask the user for input
     data = creator.get_data()
@@ -61,11 +67,6 @@ def handle_list(args, config):
 
 def handle_render(args, config):
     render_template(args.template)
-
-
-def autocomplete_template_names(prefix: str, parsed_args, **kwargs):
-    template_repo = PromptTemplateRepository()
-    return list(template_repo.get_template_name_by_prefix(prefix=prefix))
 
 
 def handle_search(args, config):

@@ -17,6 +17,7 @@ class EditorInput:
         try:
             command = self._get_editor_command()
             command.append(temp_file_path)
+            print(f"command: {command}")
             self._open_editor(command)
             return self._read_result(temp_file_path)
         finally:
@@ -31,8 +32,8 @@ class EditorInput:
     def _open_editor(self, command: list[str]):
         try:
             result = subprocess.run(args=command, check=True, capture_output=True)
-        except subprocess.CalledProcessError:
-            raise EditorError(f"Failed to open editor for writing: {result.stderr}")
+        except subprocess.CalledProcessError as e:
+            raise EditorError(f"Failed to open editor for writing: {str(e)}")
 
     def _read_result(self, temp_file_path) -> str:
         try:
