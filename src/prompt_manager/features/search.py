@@ -18,8 +18,14 @@ from rapidfuzz import fuzz
 
 
 class TemplateSearch:
-    def __init__(self):
+    """
+    Class for searching interactively for prompt templates.
+    It will only suggest results that have the tag `tag`. If it is None, it searches through all templates.
+    """
+
+    def __init__(self, tag: str | None = None):
         self.templates: list[PromptTemplateModel] = []
+        self.tag = tag
         repo = PromptTemplateRepository()
         metadatas = repo.get_all()
         for entry in metadatas:
@@ -53,6 +59,9 @@ class TemplateSearch:
         results = []
 
         for template in self.templates:
+            if self.tag is not None:
+                if self.tag not in template.tags:
+                    continue
             name_score = fuzz.token_sort_ratio(
                 query,
                 template.name or "",
@@ -340,6 +349,9 @@ class TemplateSearch:
         get_app().invalidate()
 
     def run(self) -> PromptTemplateModel | None:
+        """
+        Method to run the search engine.
+        """
         results_control = FormattedTextControl("Type to search...")
 
         def on_search_changed(buffer):

@@ -69,6 +69,9 @@ def autocomplete_template_names(prefix: str, parsed_args, **kwargs):
     return list(template_repo.get_template_name_by_prefix(prefix=prefix))
 
 
+# TODO: add autcomplete func for tags
+
+
 def handle_search(args):
     searcher = TemplateSearch()
     result = searcher.run()
@@ -77,7 +80,7 @@ def handle_search(args):
 
 
 def handle_run(args):
-    searcher = TemplateSearch()
+    searcher = TemplateSearch(args.tag)
     while True:
         result = searcher.run()
         _clear_terminal()
@@ -139,6 +142,10 @@ def main():
 
     run_parser = subparsers.add_parser(
         "run", help="Run the search and render the selected result infinitely"
+    )
+    run_parser.add_argument(
+        "--tag",
+        help="Only select the templates that include the tag for search and rendering",
     )
     run_parser.set_defaults(func=handle_run)
 
