@@ -14,6 +14,7 @@ from prompt_manager.features.remove import remove_template
 from prompt_manager.features.render import render_template
 from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.features.search import TemplateSearch
+from prompt_manager.features.show import show_prompt
 from prompt_manager.models import MetadataModel
 
 logger = logging.getLogger(__name__)
@@ -93,6 +94,10 @@ def handle_remove(args):
     remove_template(args.template_name)
 
 
+def handle_show(args):
+    show_prompt(args.template_name)
+
+
 def main():
     parser = ArgumentParser(
         prog="prompt-manager",
@@ -142,6 +147,12 @@ def main():
     )
     remove_parser.add_argument("template_name").completer = autocomplete_template_names
     remove_parser.set_defaults(func=handle_remove)
+
+    show_parser = subparsers.add_parser("show", help="Show a prompt template")
+    show_parser.add_argument(
+        "template_name", help="The name of the template you want to show"
+    ).completer = autocomplete_template_names
+    show_parser.set_defaults(func=handle_show)
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()

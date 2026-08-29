@@ -20,3 +20,13 @@ class MetadataModel(BaseModel):
 class PromptTemplateModel(MetadataModel):
     name: str
     prompt: str
+
+    @classmethod
+    def from_data(cls, metadata: MetadataModel, prompt: str):
+        return PromptTemplateModel(
+            name=metadata.name,
+            description=metadata.description,
+            tags=metadata.tags,
+            prompt_file_name=metadata.prompt_file_name,
+            prompt=prompt,
+        )
