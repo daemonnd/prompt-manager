@@ -23,9 +23,9 @@ class TemplateSearch:
     It will only suggest results that have the tag `tag`. If it is None, it searches through all templates.
     """
 
-    def __init__(self, tag: str | None = None):
+    def __init__(self, tags: str | None = None):
         self.templates: list[PromptTemplateModel] = []
-        self.tag = tag
+        self.tags = tags
         repo = PromptTemplateRepository()
         metadatas = repo.get_all()
         for entry in metadatas:
@@ -59,9 +59,10 @@ class TemplateSearch:
         results = []
 
         for template in self.templates:
-            if self.tag is not None:
-                if self.tag not in template.tags:
-                    continue
+            if self.tags is not None and not all(
+                tag in template.tags for tag in self.tags
+            ):
+                continue
             name_score = fuzz.token_sort_ratio(
                 query,
                 template.name or "",

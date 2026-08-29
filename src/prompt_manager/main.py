@@ -73,14 +73,14 @@ def autocomplete_template_names(prefix: str, parsed_args, **kwargs):
 
 
 def handle_search(args):
-    searcher = TemplateSearch(args.tag)
+    searcher = TemplateSearch(args.tags)
     result = searcher.run()
     if result is not None:
         render_template(result.name)
 
 
 def handle_run(args):
-    searcher = TemplateSearch(args.tag)
+    searcher = TemplateSearch(args.tags)
     while True:
         result = searcher.run()
         _clear_terminal()
@@ -139,8 +139,10 @@ def main():
         "search", help="search for prompt templates matching the search criteria"
     )
     search_parser.add_argument(
-        "--tag",
+        "--tags",
         help="Only select the templates that include the tag for search and rendering",
+        nargs="+",
+        default=None,
     )
     search_parser.set_defaults(func=handle_search)
 
@@ -148,8 +150,10 @@ def main():
         "run", help="Run the search and render the selected result infinitely"
     )
     run_parser.add_argument(
-        "--tag",
+        "--tags",
         help="Only select the templates that include the tag for search and rendering",
+        nargs="+",
+        default=None,
     )
     run_parser.set_defaults(func=handle_run)
 
