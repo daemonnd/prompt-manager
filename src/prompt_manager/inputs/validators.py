@@ -163,7 +163,7 @@ class TagValidator(Validator):
     """
 
     def validate(self, document: Document) -> None:
-        text = document.text.strip()
+        text = document.text
 
         if not text:
             raise ValidationError(
@@ -171,8 +171,7 @@ class TagValidator(Validator):
                 cursor_position=0,
             )
 
-        tags = [tag.strip() for tag in text.split(",")]
-
+        tags = [tag for tag in text.split(",")]
         for tag in tags:
             if not tag:
                 raise ValidationError(
@@ -180,6 +179,11 @@ class TagValidator(Validator):
                     cursor_position=len(document.text),
                 )
 
+            if " " in tag:
+                raise ValidationError(
+                    message=f"spaces are not allowed for tags, but '{tag}' contains at least one.",
+                    cursor_position=document.text.find(tag),
+                )
             if not _TAG_PATTERN.fullmatch(tag):
                 raise ValidationError(
                     message=f"'{tag}' contains invalid characters. Only a-z, 0-9, '_' and '-' are allowed.",
