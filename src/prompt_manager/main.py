@@ -72,6 +72,17 @@ def autocomplete_template_names(prefix: str, parsed_args, **kwargs):
 # TODO: add autcomplete func for tags
 
 
+def autocomplete_tags(prefix: str, parsed_args, **kwargs):
+    matching_tags = []
+    with PromptTemplateRepository() as repo:
+        tags = repo.get_all_tags()
+        for tag in tags:
+            if tag.startswith(prefix):
+                #            yield tag
+                matching_tags.append(tag)
+    return matching_tags
+
+
 def handle_search(args):
     searcher = TemplateSearch(args.tags)
     result = searcher.run()
@@ -143,7 +154,7 @@ def main():
         help="Only select the templates that include the tag for search and rendering",
         nargs="+",
         default=None,
-    )
+    ).completer = autocomplete_tags
     search_parser.set_defaults(func=handle_search)
 
     run_parser = subparsers.add_parser(
@@ -154,7 +165,7 @@ def main():
         help="Only select the templates that include the tag for search and rendering",
         nargs="+",
         default=None,
-    )
+    ).completer = autocomplete_tags
     run_parser.set_defaults(func=handle_run)
 
     remove_parser = subparsers.add_parser(
