@@ -248,6 +248,27 @@ class PromptTemplateRepository:
         for row in rows:
             yield row["name"]
 
+    def get_all_tags(
+        self,
+    ) -> list[str]:  # TODO: should that be with prefix or not?
+        """
+        Method only return tags that match the prefix. used for autocompletion.
+        """
+        rows = self.cur.execute(
+            """
+            SELECT tags
+            FROM templates
+            """,  # FIXME: make that work with the prefix
+        )
+        tag_list = []
+        for row in rows:
+            tags = str(row["tags"]).split(",")
+            for tag in tags:
+                if tag in tag_list:
+                    continue
+                tag_list.append(tag)
+        return tag_list
+
     def remove_template(self, name: str) -> None:
         try:
             self.cur.execute(

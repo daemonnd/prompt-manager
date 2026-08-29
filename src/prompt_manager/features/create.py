@@ -30,28 +30,8 @@ class CreateTemplate:
             )  # returns a string, at that point description is a string and not None
             if description.replace(" ", "") == "":
                 description = None
-            tags = get_tags_session(
-                [
-                    "summary",
-                    "summarization",
-                    "favourite",
-                    "ai",
-                    "transcript",
-                    "video",
-                    "coding",
-                    "assistant",
-                    "finances",
-                    "work",
-                    "school",
-                    "fitness",
-                    "sports",
-                    "health",
-                    "research",
-                    "agent",
-                    "traveling",
-                    "technology",
-                ]
-            ).prompt(
+            tags = template_db.get_all_tags()
+            tags = get_tags_session(tags).prompt(
                 f"Which tags should the new prompt template '{name}' get? \nFormat: 'summary,transcript,video' "
             )
             prompt_file_name = f"{name}.md"
