@@ -1,7 +1,7 @@
 from rich import print as rprint
+import sys
 import logging
 import json
-import logging
 from argparse import ArgumentParser
 
 import argcomplete
@@ -9,10 +9,9 @@ import argcomplete
 from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.errors import TemplateDBError
 from prompt_manager.features.create import CreateTemplate
-from prompt_manager.features.errors import TemplateCreationError
+from prompt_manager.features.errors import SearchInterrupted, TemplateCreationError
 from prompt_manager.features.remove import remove_template
 from prompt_manager.features.render import render_template
-from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.features.search import TemplateSearch
 from prompt_manager.features.show import show_prompt
 from prompt_manager.models import MetadataModel
@@ -93,15 +92,31 @@ def handle_search(args):
 def handle_run(args):
     searcher = TemplateSearch(args.tags)
     while True:
-        result = searcher.run()
+        try:
+            result = searcher.run()
+        except SearchInterrupted:
+            rprint("[red]Exiting due to KeyboardInterrupt[red]")
+            sys.exit(130)
         _clear_terminal()
         if result is None:
             rprint("[red]No matching templates found to render.[/red]")
-            input("Press <ENTER> to continue...")
+            try:
+                input("Press <ENTER> to continue...")
+            except KeyboardInterrupt:
+                rprint("[red]Exiting due to KeyboardInterrupt[/red]")
+                sys.exit(130)
         else:
             rprint(f"Rendering Template: [bold][cyan]{result.name}[/cyan][/bold]")
-            render_template(result.name)
-            input("Press <ENTER> to continue...")
+            try:
+                render_template(result.name)
+            except KeyboardInterrupt:
+                rprint("[red]Exiting due to KeyboardInterrupt[/red]")
+                sys.exit(130)
+            try:
+                input("Press <ENTER> to continue...")
+            except KeyboardInterrupt:
+                rprint("[red]Exiting due to KeyboardInterrupt[/red]")
+                sys.exit(130)
 
 
 def handle_remove(args):
