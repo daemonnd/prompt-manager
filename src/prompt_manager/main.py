@@ -92,31 +92,18 @@ def handle_search(args):
 def handle_run(args):
     searcher = TemplateSearch(args.tags)
     while True:
-        try:
-            result = searcher.run()
-        except SearchInterrupted:
-            rprint("[red]Exiting due to KeyboardInterrupt[red]")
-            sys.exit(130)
+        result = searcher.run()
         _clear_terminal()
         if result is None:
             rprint("[red]No matching templates found to render.[/red]")
-            try:
-                input("Press <ENTER> to continue...")
-            except KeyboardInterrupt:
-                rprint("[red]Exiting due to KeyboardInterrupt[/red]")
-                sys.exit(130)
+            input("Press <ENTER> to continue...")
         else:
             rprint(f"Rendering Template: [bold][cyan]{result.name}[/cyan][/bold]")
             try:
                 render_template(result.name)
             except KeyboardInterrupt:
-                rprint("[red]Exiting due to KeyboardInterrupt[/red]")
-                sys.exit(130)
-            try:
-                input("Press <ENTER> to continue...")
-            except KeyboardInterrupt:
-                rprint("[red]Exiting due to KeyboardInterrupt[/red]")
-                sys.exit(130)
+                continue
+            input("Press <ENTER> to continue...")
 
 
 def handle_remove(args):
@@ -198,7 +185,11 @@ def main():
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
     if hasattr(args, "func"):
-        args.func(args)
+        try:
+            args.func(args)
+        except KeyboardInterrupt, SearchInterrupted:
+            rprint("[red]Exiting due to KeyboardInterrupt[red]")
+            sys.exit(130)
 
 
 if __name__ == "__main__":
