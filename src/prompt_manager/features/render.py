@@ -26,8 +26,12 @@ def render_template(name: str):
         if field_name is not None:
             placeholders.append(field_name)
 
-    values = {}
+    values: dict[str, str] = {}
+    used_placeholders: set[str] = set()
     for placeholder in placeholders:
+        if placeholder in used_placeholders:
+            continue
+        used_placeholders.add(placeholder)
         values[placeholder] = input(f"What is the {placeholder} of the prompt: ")
 
     final_prompt = prompt.format(**values)
