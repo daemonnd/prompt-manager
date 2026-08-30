@@ -32,7 +32,7 @@ def render_template(name: str):
         if placeholder in used_placeholders:
             continue
         used_placeholders.add(placeholder)
-        values[placeholder] = input(f"What is the {placeholder} of the prompt: ")
+        values[placeholder] = input(f"{placeholder}: ")
 
     final_prompt = prompt.format(**values)
 
