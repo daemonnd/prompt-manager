@@ -21,3 +21,8 @@ class TemplateCreationError(Exception):
 class PromptFileWritingError(TemplateCreationError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+
+class SearchInterrupted(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

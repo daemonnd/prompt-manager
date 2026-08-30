@@ -1,7 +1,7 @@
 from rich import print as rprint
+import sys
 import logging
 import json
-import logging
 from argparse import ArgumentParser
 
 import argcomplete
@@ -9,10 +9,9 @@ import argcomplete
 from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.errors import TemplateDBError
 from prompt_manager.features.create import CreateTemplate
-from prompt_manager.features.errors import TemplateCreationError
+from prompt_manager.features.errors import SearchInterrupted, TemplateCreationError
 from prompt_manager.features.remove import remove_template
 from prompt_manager.features.render import render_template
-from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.features.search import TemplateSearch
 from prompt_manager.features.show import show_prompt
 from prompt_manager.models import MetadataModel
@@ -100,7 +99,10 @@ def handle_run(args):
             input("Press <ENTER> to continue...")
         else:
             rprint(f"Rendering Template: [bold][cyan]{result.name}[/cyan][/bold]")
-            render_template(result.name)
+            try:
+                render_template(result.name)
+            except KeyboardInterrupt:
+                continue
             input("Press <ENTER> to continue...")
 
 
@@ -183,7 +185,11 @@ def main():
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
     if hasattr(args, "func"):
-        args.func(args)
+        try:
+            args.func(args)
+        except KeyboardInterrupt, SearchInterrupted:
+            rprint("[red]Exiting due to KeyboardInterrupt[red]")
+            sys.exit(130)
 
 
 if __name__ == "__main__":
