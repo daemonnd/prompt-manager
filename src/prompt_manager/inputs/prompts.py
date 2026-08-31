@@ -6,7 +6,7 @@ from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.key_binding import KeyBindings
 
 from prompt_manager.inputs.completers import PlaceholderCompleter, TagCompleter
-from prompt_manager.inputs.validators import (
+from prompt_manager.inputs.interactive_validators import (
     LengthValidator,
     PlaceholderValidator,
     TemplateNameValidator,
