@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 import argcomplete
 
 from prompt_manager.db_repo import PromptTemplateRepository
-from prompt_manager.errors import TemplateDBError
+from prompt_manager.errors import InvalidAddArgumentsError, TemplateDBError
 from prompt_manager.features.create import CreateTemplate
 from prompt_manager.features.errors import SearchInterrupted, TemplateCreationError
 from prompt_manager.features.remove import remove_template
@@ -21,26 +21,6 @@ logger = logging.getLogger(__name__)
 
 def _clear_terminal():
     print("\033[2J\033[H", end="")
-
-
-def handle_add(args):
-    creator = CreateTemplate()
-    template_repo = PromptTemplateRepository()
-    # ask the user for input
-    data = creator.get_data()
-    # save the raw prompt to a file
-    try:
-        creator.save_prompt(prompt=data.prompt, prompt_file_name=data.prompt_file_name)
-        # add a db entry containing the metadata of the template
-        template_repo.create_new(data=MetadataModel.from_template(data))
-    except TemplateCreationError as e:
-        logger.error(
-            f"Failed to save the prompt for prompt template '{data.name}': {str(e)}"
-        )
-    except TemplateDBError as e:
-        logger.error(
-            f"Failed to write template '{data.name}' metadata to database: {str(e)}"
-        )
 
 
 def handle_list(args):
@@ -66,9 +46,6 @@ def handle_render(args):
 def autocomplete_template_names(prefix: str, parsed_args, **kwargs):
     template_repo = PromptTemplateRepository()
     return list(template_repo.get_template_name_by_prefix(prefix=prefix))
-
-
-# TODO: add autcomplete func for tags
 
 
 def autocomplete_tags(prefix: str, parsed_args, **kwargs):
@@ -114,6 +91,56 @@ def handle_show(args):
     show_prompt(args.template_name)
 
 
+def validate_add_args(args, parser):
+    core_args = (
+        args.name is not None,
+        args.tags is not None,
+        args.prompt_file is not None,
+    )
+
+    provided_core_args = sum(core_args)
+
+    if provided_core_args == 0 and args.description is None:
+        return
+
+    if provided_core_args == 3:
+        return
+
+    parser.error(
+        "--name, --tags, and --prompt-file are required when using "
+        "non-interactive mode; --description is optional"
+    )
+
+
+def handle_add(args):
+    validate_add_args(args, args.parser)
+
+    creator = CreateTemplate()
+    template_repo = PromptTemplateRepository()
+
+    if args.name is not None:
+        # non-interactive creation
+        pass
+
+    # interactive creation
+    data = creator.get_data()
+
+    try:
+        creator.save_prompt(
+            prompt=data.prompt,
+            prompt_file_name=data.prompt_file_name,
+        )
+        template_repo.create_new(data=MetadataModel.from_template(data))
+    except TemplateCreationError as e:
+        logger.error(
+            f"Failed to save the prompt for prompt template '{data.name}': {str(e)}"
+        )
+    except TemplateDBError as e:
+        logger.error(
+            f"Failed to write template '{data.name}' metadata to database: {str(e)}"
+        )
+
+
 def main():
     parser = ArgumentParser(
         prog="prompt-manager",
@@ -122,8 +149,30 @@ def main():
     subparsers = parser.add_subparsers(
         required=True,
     )
-    add_parser = subparsers.add_parser("add", help="add a new prompt template")
-    add_parser.set_defaults(func=handle_add)
+    add_parser = subparsers.add_parser(
+        "add",
+        help="add a new prompt template. If one flag is used, the other ones (except description) are required because the prompt template will be created non-interactively",
+    )
+    add_parser.add_argument(
+        "--name", help="The title of the prompt template to be created"
+    )
+    add_parser.add_argument(
+        "--description",
+        help="The description of the prompt template to be created. Optional. ",
+    )
+    add_parser.add_argument(
+        "--tags",
+        nargs="+",
+        help="The tags of the prompt template to be created. Usage: --tags summary summarization",
+    )
+    add_parser.add_argument(
+        "--prompt-file",
+        help="The path to a plaintext prompt file. The entire contents of that file are used as prompt. ",
+    )
+    add_parser.set_defaults(
+        func=handle_add,
+        parser=add_parser,
+    )
 
     render_parser = subparsers.add_parser(
         "render", help="render a prompt with filled in variables"
@@ -168,8 +217,8 @@ def main():
         nargs="+",
         default=None,
     ).completer = autocomplete_tags
-    run_parser.set_defaults(func=handle_run)
 
+    run_parser.set_defaults(func=handle_run)
     remove_parser = subparsers.add_parser(
         "rm", help="Remove the selected prompt template"
     )
@@ -184,11 +233,12 @@ def main():
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
+
     if hasattr(args, "func"):
         try:
             args.func(args)
         except KeyboardInterrupt, SearchInterrupted:
-            rprint("[red]Exiting due to KeyboardInterrupt[red]")
+            rprint("[red]Exiting due to KeyboardInterrupt[/red]")
             sys.exit(130)
 
 

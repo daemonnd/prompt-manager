@@ -46,6 +46,11 @@ class CreateTemplate:
                 prompt=prompt,
             )
 
+    def create_from_args(
+        self, name: str, description: str | None, tags: list[str], prompt_file: str
+    ) -> PromptTemplateModel:
+        pass
+
     def save_prompt(self, prompt: str, prompt_file_name: str | Path):
         """
         Method to save the prompt template itselft to a file
