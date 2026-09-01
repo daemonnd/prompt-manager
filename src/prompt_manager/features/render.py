@@ -1,10 +1,12 @@
 import string
-from prompt_manager.db_repo import PromptTemplateRepository
-from prompt_manager.features.load import load_prompt, load_template
-from prompt_manager.features.errors import TemplateNotFoundError
+
 import pyperclip
 from rich import print as rprint
 from rich.console import Console
+
+from prompt_manager.db_repo import PromptTemplateRepository
+from prompt_manager.features.errors import TemplateNotFoundError
+from prompt_manager.features.load import load_prompt
 
 console = Console()
 

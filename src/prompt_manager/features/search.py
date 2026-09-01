@@ -11,10 +11,11 @@ from prompt_toolkit.layout.controls import (
     FormattedTextControl,
 )
 from prompt_toolkit.styles import Style
+from rapidfuzz import fuzz
+
 from prompt_manager.db_repo import PromptTemplateRepository
 from prompt_manager.features.load import load_prompt
 from prompt_manager.models import PromptTemplateModel
-from rapidfuzz import fuzz
 
 
 class TemplateSearch:

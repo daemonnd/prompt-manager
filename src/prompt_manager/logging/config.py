@@ -2,10 +2,9 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 
-
 from prompt_manager.config.models import AppConfig
 from prompt_manager.logging.filters import ConsoleDependencyFilter, FileDependencyFilter
-from prompt_manager.logging.formatters import JSONFormatter, ConsoleFormatter
+from prompt_manager.logging.formatters import ConsoleFormatter, JSONFormatter
 from prompt_manager.logging.handlers import RichConsoleHandler
 from prompt_manager.paths import LOG_DIR, LOG_FILE
 

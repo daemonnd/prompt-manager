@@ -1,8 +1,7 @@
 import logging
 
-from rich.console import Console
-
 from promp_manager.logging.formatters import get_style
+from rich.console import Console
 
 
 class RichConsoleHandler(logging.Handler):

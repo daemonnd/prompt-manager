@@ -1,7 +1,8 @@
 import logging
+from collections.abc import Mapping
 from json import dumps
 from logging import Formatter, LogRecord
-from typing import Any, Mapping
+from typing import Any
 
 from prompt_manager.logging.json_utils import normalize
 

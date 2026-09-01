@@ -9,10 +9,9 @@ from prompt_manager.inputs.completers import PlaceholderCompleter, TagCompleter
 from prompt_manager.inputs.validators import (
     LengthValidator,
     PlaceholderValidator,
-    TemplateNameValidator,
     TagValidator,
+    TemplateNameValidator,
 )
-
 
 bindings = KeyBindings()
 

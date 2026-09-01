@@ -15,7 +15,6 @@ from prompt_manager.config.errors import (
     InvalidConfigError,
 )
 from prompt_manager.config.models import AppConfig
-
 from prompt_manager.paths import CONFIG_FILE
 
 
@@ -25,21 +24,21 @@ def load_config(config_path: Path = CONFIG_FILE) -> AppConfig:
             return AppConfig.model_validate(tomllib.load(f))
     except TOMLDecodeError as e:
         raise InvalidConfigError(
-            f"Unable to decode TOML in {config_path}: {str(e)}"
+            f"Unable to decode TOML in {config_path}: {e!s}"
         ) from e
     except UnicodeDecodeError as e:
-        raise InvalidConfigError(f"Unable to decode TOML in {config_path}: {str(e)}")
+        raise InvalidConfigError(f"Unable to decode TOML in {config_path}: {e!s}")
     except IsADirectoryError as e:
         raise ConfigFileNotFoundError(
-            f"The config file is a directory: {str(e)}"
+            f"The config file is a directory: {e!s}"
         ) from e
     except FileNotFoundError as e:
         raise ConfigFileNotFoundError(
-            # f"The config file has not been found at {config_path}: {str(e)}. You may need to run `prompt init` for getting the default config"
+            # f"The config file has not been found at {config_path}: {e!s}. You may need to run `prompt init` for getting the default config"
         ) from e
     except PermissionError as e:
         raise ConfigFilePermissionError(
-            f"Permission Error while opening the config file at {config_path}: {str(e)}"
+            f"Permission Error while opening the config file at {config_path}: {e!s}"
         ) from e
     except ValidationError as e:
-        raise ConfigValidationError(f"The Config seems to be wrong: {str(e)}") from e
+        raise ConfigValidationError(f"The Config seems to be wrong: {e!s}") from e

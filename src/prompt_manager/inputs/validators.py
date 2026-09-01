@@ -4,7 +4,6 @@ import string
 from prompt_toolkit.document import Document
 from prompt_toolkit.validation import ValidationError, Validator
 
-
 _TEMPLATE_NAME_PATTERN = re.compile(r"^[a-z0-9_-]+$")
 
 

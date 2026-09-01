@@ -1,14 +1,12 @@
-from rich import print as rprint
-import logging
 import json
 import logging
 from argparse import ArgumentParser
 
 import argcomplete
+from rich import print as rprint
 
 from prompt_manager.config.loader import load_config
 from prompt_manager.db_repo import PromptTemplateRepository
-from prompt_manager.editor import EditorInput
 from prompt_manager.errors import TemplateDBError
 from prompt_manager.features.create import CreateTemplate
 from prompt_manager.features.errors import TemplateCreationError
@@ -41,11 +39,11 @@ def handle_add(args, config):
         template_repo.create_new(data=MetadataModel.from_template(data))
     except TemplateCreationError as e:
         logger.error(
-            f"Failed to save the prompt for prompt template '{data.name}': {str(e)}"
+            f"Failed to save the prompt for prompt template '{data.name}': {e!s}"
         )
     except TemplateDBError as e:
         logger.error(
-            f"Failed to write template '{data.name}' metadata to database: {str(e)}"
+            f"Failed to write template '{data.name}' metadata to database: {e!s}"
         )
 
 

@@ -1,5 +1,6 @@
-from platformdirs import user_config_dir, user_data_dir, user_log_dir
 from pathlib import Path
+
+from platformdirs import user_config_dir, user_data_dir, user_log_dir
 
 DATA_DIR: Path = Path(user_data_dir("prompt_manager"))
 PROMPT_TEMPLATES: Path = DATA_DIR / "templates"
