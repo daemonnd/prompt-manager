@@ -1,22 +1,23 @@
-import re
-import string
-
 from prompt_toolkit.document import Document
 from prompt_toolkit.validation import ValidationError, Validator
 
-from prompt_manager.inputs.validators import validate_template_name
+from prompt_manager.inputs.validators import (
+    validate_length,
+    validate_placeholders,
+    validate_tags,
+    validate_template_name,
+)
 
 
 class TemplateNameValidator(Validator):
     """
     Validates a prompt template name.
-    It can also validate tags by using tags=True which allows commas
 
     Rules:
     - only lowercase letters
     - digits
     - '_' and '-'
-    - cannot start/end with '_' or '-' or ','
+    - cannot start/end with '_' or '-'
     """
 
     def __init__(self, existing_names: list[str]) -> None:
@@ -25,6 +26,17 @@ class TemplateNameValidator(Validator):
 
     def validate(self, document: Document) -> None:
         text = document.text.strip()
+
+        failure = validate_template_name(
+            name=text,
+            existing_names=self.existing_names,
+        )
+
+        if failure is not None:
+            raise ValidationError(
+                message=failure.message,
+                cursor_position=failure.cursor_position,
+            )
 
 
 class PlaceholderValidator(Validator):
@@ -39,6 +51,14 @@ class PlaceholderValidator(Validator):
 
     def validate(self, document: Document) -> None:
         text = document.text
+
+        failure = validate_placeholders(prompt=text)
+
+        if failure is not None:
+            raise ValidationError(
+                message=failure.message,
+                cursor_position=failure.cursor_position,
+            )
 
 
 class LengthValidator(Validator):
@@ -62,12 +82,26 @@ class LengthValidator(Validator):
         max_length: int | None = None,
         strip: bool = True,
     ) -> None:
+        super().__init__()
         self.min_length = min_length
         self.max_length = max_length
         self.strip = strip
 
     def validate(self, document: Document) -> None:
         text = document.text
+
+        failure = validate_length(
+            text=text,
+            min_length=self.min_length,
+            max_length=self.max_length,
+            strip=self.strip,
+        )
+
+        if failure is not None:
+            raise ValidationError(
+                message=failure.message,
+                cursor_position=failure.cursor_position,
+            )
 
 
 class TagValidator(Validator):
@@ -80,3 +114,11 @@ class TagValidator(Validator):
 
     def validate(self, document: Document) -> None:
         text = document.text
+
+        failure = validate_tags(tag_text=text)
+
+        if failure is not None:
+            raise ValidationError(
+                message=failure.message,
+                cursor_position=failure.cursor_position,
+            )
