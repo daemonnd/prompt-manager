@@ -19,13 +19,7 @@ def normalize(obj: Any) -> Any:
     """
 
     # check if the object is a primitive
-    if isinstance(obj, int):
-        return obj
-    elif isinstance(obj, str):
-        return obj
-    elif obj is None:
-        return obj
-    elif isinstance(obj, float):
+    if isinstance(obj, int) or isinstance(obj, str) or obj is None or isinstance(obj, float):
         return obj
     elif isinstance(obj, list):
         return iterate_list(obj)

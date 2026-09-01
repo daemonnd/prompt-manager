@@ -1,6 +1,6 @@
 import re
-from dataclasses import dataclass
 import string
+from dataclasses import dataclass
 
 _TEMPLATE_NAME_PATTERN = re.compile(r"^[a-z0-9_-]+$")
 

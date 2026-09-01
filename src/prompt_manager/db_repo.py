@@ -1,8 +1,8 @@
-import json
 import sqlite3
+from collections.abc import Generator
 from pathlib import Path
 from sqlite3 import Connection, Cursor, IntegrityError, OperationalError
-from typing import Any, Generator, Literal
+from typing import Literal
 
 from pydantic import ValidationError
 
@@ -62,11 +62,11 @@ class PromptTemplateRepository:
             self.conn.commit()
         except IntegrityError as e:
             raise DBIntegrityError(
-                f"IntegrityError: Failed to write to the database while creating template '{data.name}' because a database constraint was violated: {str(e)}"
+                f"IntegrityError: Failed to write to the database while creating template '{data.name}' because a database constraint was violated: {e!s}"
             ) from e
         except OperationalError as e:
             raise DBOperationalError(
-                f"Failed to write to the database while creating template '{data.name}' because of an operational error: {str(e)}"
+                f"Failed to write to the database while creating template '{data.name}' because of an operational error: {e!s}"
             ) from e
 
     def update_template(self, name: str, data: MetadataModel) -> None:
@@ -105,11 +105,11 @@ class PromptTemplateRepository:
                 )
         except IntegrityError as e:
             raise DBIntegrityError(
-                f"Failed to write to the database while updating template '{data.name}' because a database constraint was violated: {str(e)}"
+                f"Failed to write to the database while updating template '{data.name}' because a database constraint was violated: {e!s}"
             ) from e
         except OperationalError as e:
             raise DBOperationalError(
-                f"Failed to write to the database while updating template '{data.name}' because of an operational error: {str(e)}"
+                f"Failed to write to the database while updating template '{data.name}' because of an operational error: {e!s}"
             ) from e
 
     def del_template(self, name: str) -> None:
@@ -137,11 +137,11 @@ class PromptTemplateRepository:
                 )
         except IntegrityError as e:
             raise DBIntegrityError(
-                f"Failed to write to the database while deleting template '{name}' because a database constraint was violated: {str(e)}"
+                f"Failed to write to the database while deleting template '{name}' because a database constraint was violated: {e!s}"
             ) from e
         except OperationalError as e:
             raise DBOperationalError(
-                f"Failed to write to the database while deleting template '{name}' because of an operational error: {str(e)}"
+                f"Failed to write to the database while deleting template '{name}' because of an operational error: {e!s}"
             ) from e
 
     def get(
@@ -166,7 +166,7 @@ class PromptTemplateRepository:
             return MetadataModel.model_validate(dict(row))
         except ValidationError as e:
             raise DBDataValidationError(
-                f"The database seems to have invalid data: {str(e)}"
+                f"The database seems to have invalid data: {e!s}"
             ) from e
 
     def exists(self, name: str) -> bool:
@@ -184,7 +184,7 @@ class PromptTemplateRepository:
             is not None
         )
 
-    def get_all(self) -> Generator[MetadataModel, None, None]:
+    def get_all(self) -> Generator[MetadataModel]:
         """
         Method to iterate over all templates.
         """
@@ -202,13 +202,13 @@ class PromptTemplateRepository:
                 yield MetadataModel.model_validate(dict(row))
             except ValidationError as e:
                 raise DBDataValidationError(
-                    f"The database seems to have invalid data: {str(e)}"
+                    f"The database seems to have invalid data: {e!s}"
                 ) from e
 
     def list_templates(
         self,
         pattern: list[Literal["name", "description", "tags", "prompt_file_name"]],
-    ) -> Generator[dict, None, None]:
+    ) -> Generator[dict]:
         """
         Method to list the availible templates
         It returns a dict because it can explicitally return only some fields.
@@ -229,10 +229,10 @@ class PromptTemplateRepository:
                 yield dict(extracted_pattern)
             except ValidationError as e:
                 raise DBDataValidationError(
-                    f"The database seems to have invalid data: {str(e)}"
+                    f"The database seems to have invalid data: {e!s}"
                 ) from e
 
-    def get_template_name_by_prefix(self, prefix: str) -> Generator[str, None, None]:
+    def get_template_name_by_prefix(self, prefix: str) -> Generator[str]:
         """
         Method to only return template names that match the prefix. used for autocompletion.
         """
@@ -286,11 +286,11 @@ class PromptTemplateRepository:
                 )
         except IntegrityError as e:
             raise DBIntegrityError(
-                f"Failed to write to the database while deleting template '{name}' because a database constraint was violated: {str(e)}"
+                f"Failed to write to the database while deleting template '{name}' because a database constraint was violated: {e!s}"
             ) from e
         except OperationalError as e:
             raise DBOperationalError(
-                f"Failed to write to the database while deleting template '{name}' because of an operational error: {str(e)}"
+                f"Failed to write to the database while deleting template '{name}' because of an operational error: {e!s}"
             ) from e
 
     def close(self) -> None:

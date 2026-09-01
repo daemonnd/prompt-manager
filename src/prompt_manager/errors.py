@@ -25,3 +25,8 @@ class DBDataValidationError(TemplateDBError):
 
 class InvalidAddArgumentsError(Exception):
     pass
+
+
+class EditorError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

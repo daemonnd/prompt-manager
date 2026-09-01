@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ConsoleLoggingConfig(BaseModel):
@@ -26,6 +26,12 @@ class LoggingConfig(BaseModel):
     file: FileLoggingConfig
 
 
+class EditorInputsConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    prompt: bool
+
+
 class AppConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     logging: LoggingConfig
+    editor_inputs: EditorInputsConfig

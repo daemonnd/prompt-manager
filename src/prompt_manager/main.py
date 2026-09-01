@@ -1,13 +1,14 @@
-from rich import print as rprint
-import sys
-import logging
 import json
+import logging
+import sys
 from argparse import ArgumentParser
 
 import argcomplete
+from rich import print as rprint
 
+from prompt_manager.config.loader import load_config
 from prompt_manager.db_repo import PromptTemplateRepository
-from prompt_manager.errors import InvalidAddArgumentsError, TemplateDBError
+from prompt_manager.errors import TemplateDBError
 from prompt_manager.features.create import CreateTemplate
 from prompt_manager.features.errors import SearchInterrupted, TemplateCreationError
 from prompt_manager.features.remove import remove_template
@@ -23,7 +24,12 @@ def _clear_terminal():
     print("\033[2J\033[H", end="")
 
 
-def handle_list(args):
+def autocomplete_template_names(prefix: str, parsed_args, **kwargs):
+    template_repo = PromptTemplateRepository()
+    return list(template_repo.get_template_name_by_prefix(prefix=prefix))
+
+
+def handle_list(args, config):
     template_repo = PromptTemplateRepository()
     if args.all:
         entries = template_repo.get_all()
@@ -39,13 +45,8 @@ def handle_list(args):
             rprint(entry["name"])
 
 
-def handle_render(args):
+def handle_render(args, config):
     render_template(args.template)
-
-
-def autocomplete_template_names(prefix: str, parsed_args, **kwargs):
-    template_repo = PromptTemplateRepository()
-    return list(template_repo.get_template_name_by_prefix(prefix=prefix))
 
 
 def autocomplete_tags(prefix: str, parsed_args, **kwargs):
@@ -59,14 +60,14 @@ def autocomplete_tags(prefix: str, parsed_args, **kwargs):
     return matching_tags
 
 
-def handle_search(args):
-    searcher = TemplateSearch(args.tags)
+def handle_search(args, config):
+    searcher = TemplateSearch()
     result = searcher.run()
     if result is not None:
         render_template(result.name)
 
 
-def handle_run(args):
+def handle_run(args, config):
     searcher = TemplateSearch(args.tags)
     while True:
         result = searcher.run()
@@ -83,12 +84,12 @@ def handle_run(args):
             input("Press <ENTER> to continue...")
 
 
-def handle_remove(args):
+def handle_remove(args, config):
     for template in args.template_name:
         remove_template(template)
 
 
-def handle_show(args):
+def handle_show(args, config):
     show_prompt(args.template_name)
 
 
@@ -113,10 +114,10 @@ def validate_add_args(args, parser):
     )
 
 
-def handle_add(args):
+def handle_add(args, config):
     validate_add_args(args, args.parser)
 
-    creator = CreateTemplate()
+    creator = CreateTemplate(config=config)
     template_repo = PromptTemplateRepository()
 
     if args.name is not None:
@@ -139,11 +140,11 @@ def handle_add(args):
         template_repo.create_new(data=MetadataModel.from_template(data))
     except TemplateCreationError as e:
         logger.error(
-            f"Failed to save the prompt for prompt template '{data.name}': {str(e)}"
+            f"Failed to save the prompt for prompt template '{data.name}': {e!s}"
         )
     except TemplateDBError as e:
         logger.error(
-            f"Failed to write template '{data.name}' metadata to database: {str(e)}"
+            f"Failed to write template '{data.name}' metadata to database: {e!s}"
         )
 
 
@@ -239,12 +240,13 @@ def main():
     ).completer = autocomplete_template_names
     show_parser.set_defaults(func=handle_show)
 
+    config = load_config()
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
     if hasattr(args, "func"):
         try:
-            args.func(args)
+            args.func(args, config)
         except KeyboardInterrupt, SearchInterrupted:
             rprint("[red]Exiting due to KeyboardInterrupt[/red]")
             sys.exit(130)
