@@ -84,7 +84,8 @@ def handle_run(args):
 
 
 def handle_remove(args):
-    remove_template(args.template_name)
+    for template in args.template_name:
+        remove_template(template)
 
 
 def handle_show(args):
@@ -225,9 +226,11 @@ def main():
 
     run_parser.set_defaults(func=handle_run)
     remove_parser = subparsers.add_parser(
-        "rm", help="Remove the selected prompt template"
+        "rm", help="Remove the selected prompt template(s)"
     )
-    remove_parser.add_argument("template_name").completer = autocomplete_template_names
+    remove_parser.add_argument(
+        "template_name", nargs="+"
+    ).completer = autocomplete_template_names
     remove_parser.set_defaults(func=handle_remove)
 
     show_parser = subparsers.add_parser("show", help="Show a prompt template")
