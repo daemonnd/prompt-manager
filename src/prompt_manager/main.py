@@ -120,10 +120,15 @@ def handle_add(args):
 
     if args.name is not None:
         # non-interactive creation
-        pass
-
-    # interactive creation
-    data = creator.get_data()
+        data = creator.create_from_args(
+            name=args.name,
+            description=args.description,
+            tags=args.tags,
+            prompt_file=args.prompt_file,
+        )
+    else:
+        # interactive creation
+        data = creator.get_data()
 
     try:
         creator.save_prompt(
